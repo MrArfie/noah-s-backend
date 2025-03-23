@@ -19,7 +19,7 @@ if (!process.env.MONGO_URI) {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors({
-  origin: ['https://your-netlify-site.netlify.app', 'http://localhost:4200'], // ✅ Replace with your actual Netlify site
+    origin: 'https://noahs-ark-shelter.netlify.app',
   credentials: true
 }));
 app.use(helmet());
