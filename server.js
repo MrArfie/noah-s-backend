@@ -9,61 +9,70 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Ensure .env has MONGO_URI
+// ✅ Check MONGO_URI
 if (!process.env.MONGO_URI) {
   console.error('❌ MONGO_URI is missing in .env file');
   process.exit(1);
 }
 
-// ✅ Middlewares
-app.use(express.json({ limit: '10mb' })); // 🛠️ Support large JSON payloads
-app.use(express.urlencoded({ extended: true, limit: '10mb' })); // 🛠️ Support form data
-app.use(cors());      // 🌐 Enable CORS for frontend
-app.use(helmet());    // 🛡️ Secure HTTP headers
-app.use(morgan('dev')); // 📋 Request logging
+// ✅ Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cors());
+app.use(helmet());
+app.use(morgan('dev'));
 
 // ✅ Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: '⚠️ Too many requests, please try again later.',
-});
-app.use(limiter);
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: '⚠️ Too many requests, please try again later.',
+  })
+);
 
 // ✅ MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB Atlas'))
   .catch((err) => {
     console.error('❌ MongoDB Connection Error:', err.message);
     process.exit(1);
   });
 
-// ✅ Routes
+// ✅ Route Imports
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const petRoutes = require('./routes/petRoutes'); // ✅ Make sure this file exists
+const petRoutes = require('./routes/petRoutes');
+const userRoutes = require('./routes/users');
+const volunteerRoutes = require('./routes/volunteers'); // 👥 Volunteer form
+const donationRoutes = require('./routes/donations');   // 💸 Donations
 
+// ✅ Apply Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/pets', petRoutes); // 🐾 Pets endpoints
+app.use('/api/pets', petRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/volunteers', volunteerRoutes);
+app.use('/api/donations', donationRoutes);
 
-// ✅ Root route
+// ✅ Default Route
 app.get('/', (req, res) => {
-  res.send('🚀 Welcome to the MEAN Stack API!');
+  res.send('🚀 Welcome to the Noah’s Ark Shelter API!');
 });
 
-// ✅ Catch-all for unknown routes
+// ✅ 404 Fallback
 app.use('*', (req, res) => {
   res.status(404).json({ msg: '❌ Route not found' });
 });
 
-// ✅ Global error handler
+// ✅ Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('🔥 Server Error:', err.message);
+  console.error('🔥 Server Error:', err.stack);
   res.status(500).json({ msg: 'Internal Server Error' });
 });
 
-// ✅ Start server
+// ✅ Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
